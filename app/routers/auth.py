@@ -7,6 +7,7 @@ from app.models.user import User
 from app.schemas.auth import LoginRequest, TokenResponse
 from app.core.security import create_access_token, verify_password
 from app.core.config import settings
+from app.core.rbac import get_current_user
 
 router = APIRouter(prefix='/auth', tags=['auth'])
 
@@ -23,3 +24,8 @@ async def login(data:LoginRequest, session: AsyncSession = Depends(get_session))
 
     return TokenResponse(access_token=token)
 
+
+
+@router.get("/me")
+async def me(user=Depends(get_current_user)):
+    return {"id": user.id, "full_name": user.full_name, "email": user.email, "role": user.role}

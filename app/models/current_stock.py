@@ -5,7 +5,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import Base
 
 
-class Current_Stock(Base):
+class CurrentStock(Base):
     __tablename__ = 'current_stock'
 
     warehouse_id: Mapped[int] = mapped_column(ForeignKey("warehouses.id"), primary_key=True)

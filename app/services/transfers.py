@@ -2,6 +2,7 @@ import json
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from fastapi import HTTPException, status
+from datetime import timezone
 
 from app.models.transfer import Transfer
 from app.models.transfer_event import TransferEvent
@@ -35,26 +36,35 @@ async def _ensure_idempotent(session: AsyncSession, idempotency_key: str) -> Non
     if exists:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Duplicate request (idempotency key already used)")
 
-async def create_transfer(session: AsyncSession, operator_id: int, data) -> Transfer:
-    t = Transfer(
-        from_warehouse_id = data.from_warehouse_id,
-        to_warehouse_id = data.to_warehouse_id,
-        material_id = data.material_id,
-        planned_qty = data.planned_qty,
-        deadline_at = data.deadline_at,
-        operator_id = operator_id,
-        status='draft'
-    )
+def _to_naive_utc(dt):
+    """Accepts datetime or None. Returns naive datetime in UTC."""
+    if dt is None:
+        return None
+    if dt.tzinfo is not None:
+        return dt.astimezone(timezone.utc).replace(tzinfo=None)
+    return dt
 
+async def create_transfer(session: AsyncSession, operator_id: int, data) -> Transfer:
+    deadline = _to_naive_utc(data.deadline_at)
+
+    t = Transfer(
+        from_warehouse_id=data.from_warehouse_id,
+        to_warehouse_id=data.to_warehouse_id,
+        material_id=data.material_id,
+        planned_qty=data.planned_qty,
+        deadline_at=deadline,  # <-- ТОЛЬКО ТАК
+        operator_id=operator_id,
+        status="draft",
+    )
     session.add(t)
     await session.flush()
 
     session.add(
         TransferEvent(
             transfer_id=t.id,
-            event_type='created',
+            event_type="created",
             actor_user_id=operator_id,
-            payload_json=json.dumps({'planned_qty':float(data.planned_qty)}),
+            payload_json=json.dumps({"planned_qty": float(data.planned_qty)}),
         )
     )
     return t

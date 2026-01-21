@@ -5,6 +5,7 @@ from app.routers.branches import router as branches_router
 from app.routers.warehouses import router as warehouses_router
 from app.routers.materials import router as materials_router
 from app.routers.transfers import router as transfers_router
+from app.routers.stocks import router as stocks_router
 
 app = FastAPI()
 
@@ -14,6 +15,7 @@ app.include_router(branches_router)
 app.include_router(warehouses_router)
 app.include_router(materials_router)
 app.include_router(transfers_router)
+app.include_router(stocks_router)
 
 @app.get("/")
 async def root():

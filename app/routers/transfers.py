@@ -1,16 +1,21 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from typing import List
 
 from app.db.session import get_session
 from app.core.rbac import require_roles
 from app.schemas.transfer import (TransferCreate, TransferOut, DispatchRequest, ReceiveRequest)
+from app.schemas.transfer_event import TransferEventOut
 from app.models.transfer import Transfer
+from app.models.transfer_event import TransferEvent
 
 from app.services.transfers import create_transfer, dispatch_transfer, receive_transfer
 
 
 router = APIRouter(prefix="/transfers", tags=["Transfers"])
+
+
 
 @router.post("", response_model=TransferOut)
 async def create(
@@ -63,3 +68,13 @@ async def receive(
     await session.commit()
     await session.refresh(t)
     return t
+
+@router.get('/{transfer_id}/events', response_model=List[TransferEventOut])
+async def list_events(
+    transfer_id: int,
+    session: AsyncSession = Depends(get_session),
+    user= Depends(require_roles("admin", "operator", "manager", "storekeeper", "driver"))
+):
+    res = await session.execute(select(TransferEvent).where(TransferEvent.transfer_id == transfer_id).order_by(TransferEvent.id.asc()))
+    return res.scalars().all()
+

@@ -18,11 +18,12 @@ class TransferOut(BaseModel):
     planned_qty: float
     status: str
     operator_id: int
-    driver_id: int
-    storekeeper_from_id: int | None
-    storekeeper_to_id: int | None
-    seal_number: str | None
-    deadline_at: datetime | None
+
+    driver_id: int | None = None
+    storekeeper_from_id: int | None = None
+    storekeeper_to_id: int | None = None
+    seal_number: str | None = None
+    deadline_at: datetime | None = None
 
     class Config:
         from_attributes = True

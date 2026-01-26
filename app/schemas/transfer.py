@@ -19,6 +19,10 @@ class TransferOut(BaseModel):
     status: str
     operator_id: int
 
+    shipped_qty: float
+    received_qty: float
+    damaged_qty: float
+
     driver_id: int | None = None
     storekeeper_from_id: int | None = None
     storekeeper_to_id: int | None = None

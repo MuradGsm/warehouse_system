@@ -7,10 +7,11 @@ from app.db.session import get_session
 from app.core.rbac import require_roles
 from app.schemas.transfer import (TransferCreate, TransferOut, DispatchRequest, ReceiveRequest)
 from app.schemas.transfer_event import TransferEventOut
+from app.schemas.transfer_assign import TransferAssignRequest
 from app.models.transfer import Transfer
 from app.models.transfer_event import TransferEvent
 
-from app.services.transfers import create_transfer, dispatch_transfer, receive_transfer
+from app.services.transfers import create_transfer, dispatch_transfer, receive_transfer, assign_transfer
 
 
 router = APIRouter(prefix="/transfers", tags=["Transfers"])
@@ -78,3 +79,14 @@ async def list_events(
     res = await session.execute(select(TransferEvent).where(TransferEvent.transfer_id == transfer_id).order_by(TransferEvent.id.asc()))
     return res.scalars().all()
 
+@router.post("/{transfer_id}/assign", response_model=TransferOut)
+async def assign(
+    transfer_id: int,
+    data: TransferAssignRequest,
+    session: AsyncSession = Depends(get_session),
+    user=Depends(require_roles("admin", "operator")),
+):
+    t = await assign_transfer(session, transfer_id=transfer_id, actor_id=user.id, data=data)
+    await session.commit()
+    await session.refresh(t)
+    return t

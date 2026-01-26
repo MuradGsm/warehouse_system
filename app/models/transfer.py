@@ -20,6 +20,9 @@ class Transfer(Base):
     material_id: Mapped[int] = mapped_column(ForeignKey('materials.id'), nullable=False)
 
     planned_qty: Mapped[float] = mapped_column(Numeric(12, 3), nullable=False)
+    shipped_qty: Mapped[float] = mapped_column(Numeric(12, 3), nullable=False, default=0)
+    received_qty: Mapped[float] = mapped_column(Numeric(12, 3), nullable=False, default=0)
+    damaged_qty: Mapped[float] = mapped_column(Numeric(12, 3), nullable=False, default=0)
 
     status: Mapped[str] = mapped_column(String(50), nullable=False, default='draft')
 
